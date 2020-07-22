@@ -1,5 +1,7 @@
 # python .\cpu.py examples\print8.ls8
 # python .\ls8.py examples\print8.ls8
+# python .\ls8.py examples\mult.ls8
+# python .\ls8.py examples\stack.ls8
 
 """CPU functionality."""
 
@@ -49,8 +51,8 @@ LDI  = 0b10000010
 # LD   = 0b10000011
 # ST   = 0b10000100
 
-# PUSH = 0b01000101
-# POP  = 0b01000110
+PUSH = 0b01000101
+POP  = 0b01000110
 
 PRN  = 0b01000111
 # PRA  = 0b01001000
@@ -71,20 +73,34 @@ class CPU:
         self.running = True
         self.configure_branchtable()
         
+        SP = 7
+        self.reg[SP] = 0xF4
+        
     def configure_branchtable(self):
         self.branchtable = {}
         self.branchtable[HLT] = self.handle_HLT
         self.branchtable[LDI] = self.handle_LDI
+        self.branchtable[PUSH] = self.handle_PUSH
+        self.branchtable[POP] = self.handle_POP
         self.branchtable[PRN] = self.handle_PRN
     
     # Branchtable operations
     def handle_HLT(self):
-        print("HALTING!")
+        print("Handling HLT operation!")
         self.running = False
     def handle_LDI(self, reg_num, input):
         self.reg[reg_num] = input
+        print(f"Handling LDI operation! R{reg_num},{input}\n")
+    def handle_PUSH(self, reg_num):
+        # decrement stack pointer
+        print(f"Handling PUSH operation! R{reg_num}\nPASS\n")
+        self.reg[7] -= 1
+    def handle_POP(self, reg_num):
+        # increment stack pointed
+        print(f"Handling POP operation! R{reg_num}\nPASS\n")
+        pass
     def handle_PRN(self, reg_num):
-        print(self.reg[reg_num])
+        print(f"Handling PRN operation! R{reg_num}\n{self.reg[reg_num]}\n")
         
 ###
 ###
@@ -217,20 +233,28 @@ class CPU:
             
             # HLT, LDI, PRN, MUL
             if IR == HLT:
-                print(f"Running operation {IR}")
-                self.handle_HLT()
+                # print(f"Running operation {IR}")
+                self.branchtable[IR]()
             elif IR == LDI:
-                print(f"Running operation {IR}")
+                # print(f"Running operation {IR}")
                 self.branchtable[IR](reg_a, reg_b)
                 self.pc += 3
             elif IR == PRN:
-                print(f"Running operation {IR}")
+                # print(f"Running operation {IR}")
                 self.branchtable[IR](reg_a)
                 self.pc += 2
             elif IR == MUL:
-                print(f"Running operation {IR}")
+                # print(f"Running operation {IR}")
                 self.alu("MUL", reg_a, reg_b)
-                self.pc += 3            
+                self.pc += 3
+            elif IR == PUSH:
+                # print(f"Running operation {IR}")
+                self.branchtable[IR](reg_a)
+                self.pc += 2
+            elif IR == POP:
+                # print(f"Running operation {IR}")
+                self.branchtable[IR](reg_a)
+                self.pc += 2         
             else:
                 print(f"Unkown instruction {IR}")
                 self.handle_HLT()
