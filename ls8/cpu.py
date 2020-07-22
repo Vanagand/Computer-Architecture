@@ -1,3 +1,61 @@
+# python .\cpu.py examples\print8.ls8
+# python .\ls8.py examples\print8.ls8
+
+"""CPU functionality."""
+
+import sys
+
+# ALU Operations
+ADD  = 0b10100000
+SUB  = 0b10100001
+MUL  = 0b10100010
+DIV  = 0b10100011
+# MOD  = 0b10100100
+
+# INC  = 0b01100101
+# DEC  = 0b01100110
+
+# CMP  = 0b10100111
+
+# AND  = 0b10101000
+# NOT  = 0b01101001
+# OR   = 0b10101010
+# XOR  = 0b10101011
+# SHL  = 0b10101100
+# SHR  = 0b10101101
+
+# PC Mutators
+# CALL = 0b01010000
+# RET  = 0b00010001
+
+# INT  = 0b01010010
+# IRET = 0b00010011
+
+# JMP  = 0b01010100
+# JEQ  = 0b01010101
+# JNE  = 0b01010110
+# JGT  = 0b01010111
+# JLT  = 0b01011000
+# JLE  = 0b01011001
+# JGE  = 0b01011010
+
+# Other
+# NOP  = 0b00000000
+
+HLT  = 0b00000001 
+
+LDI  = 0b10000010
+
+# LD   = 0b10000011
+# ST   = 0b10000100
+
+# PUSH = 0b01000101
+# POP  = 0b01000110
+
+PRN  = 0b01000111
+# PRA  = 0b01001000
+
+
 """CPU functionality."""
 
 import sys
@@ -7,7 +65,45 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        pass
+        self.ram = [0] * 256
+        self.reg = [0] * 8
+        self.pc = 0
+        self.running = True
+        self.configure_branchtable()
+        
+    def configure_branchtable(self):
+        self.branchtable = {}
+        self.branchtable[HLT] = self.handle_HLT
+        self.branchtable[LDI] = self.handle_LDI
+        self.branchtable[PRN] = self.handle_PRN
+    
+    # Branchtable operations
+    def handle_HLT(self):
+        print("HALTING!")
+        self.running = False
+    def handle_LDI(self, reg_num, input):
+        self.reg[reg_num] = input
+    def handle_PRN(self, reg_num):
+        print(self.reg[reg_num])
+        
+###
+###
+###
+
+    def ram_read(self, address):
+        return self.ram[address]
+    def ram_write(self, address, value):
+        self.ram[address] = value
+    # @property
+    # def ram(self):
+    #     return self.ram
+    # @ram.setter
+    # def ram(self, x):
+    #     self.ram = x
+        
+###
+###
+###
 
     def load(self):
         """Load a program into memory."""
@@ -15,30 +111,76 @@ class CPU:
         address = 0
 
         # For now, we've just hardcoded a program:
+        # program = [
+        #     # From print8.ls8
+        #     0b10000010, # LDI R0,8
+        #     0b00000000,
+        #     0b00001000,
+        #     0b01000111, # PRN R0
+        #     0b00000000,
+        #     0b00000001, # HLT
+        # ]
 
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
+        # for instruction in program:
+        #     self.ram[address] = instruction
+        #     address += 1
 
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+        if len(sys.argv) != 2:
+            print("Invalid input: .\cpu.py filename")
+            sys.exit(1)
+        try:
+            with open(sys.argv[1]) as f:
+                for line in f:
+                    try:
+                        line = line.split("#", 1)[0]
+                        self.ram[address] = int(line, 2)
+                        address += 1
+                    except ValueError:
+                        pass
+        except FileNotFoundError:
+            print(f"Coudn't find file {sys.argv[1]}")
+            sys.exit(1)
 
+###
+###
+###
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
-
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+        elif op == "SUB":
+            self.reg[reg_a] -= self.reg[reg_b]
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]
+        elif op == "DIV":
+            self.reg[reg_a] /= self.reg[reg_b]
+        elif op == "MOD":
+            pass
+        elif op == "INC":
+            pass
+        elif op == "DEC":
+            pass
+        elif op == "CMP":
+            pass
+        elif op == "AND":
+            pass
+        elif op == "NOT":
+            pass
+        elif op == "OR":
+            pass
+        elif op == "XOR":
+            pass
+        elif op == "SHL":
+            pass
+        elif op == "SHR":
+            pass
         else:
             raise Exception("Unsupported ALU operation")
+
+###
+###
+###
 
     def trace(self):
         """
@@ -60,6 +202,35 @@ class CPU:
 
         print()
 
+###
+###
+###
+
     def run(self):
         """Run the CPU."""
-        pass
+        self.load()
+        
+        while self.running:
+            IR = self.ram[self.pc]
+            reg_a = self.ram[self.pc + 1]
+            reg_b = self.ram[self.pc + 2]
+            
+            # HLT, LDI, PRN, MUL
+            if IR == HLT:
+                print(f"Running operation {IR}")
+                self.handle_HLT()
+            elif IR == LDI:
+                print(f"Running operation {IR}")
+                self.branchtable[IR](reg_a, reg_b)
+                self.pc += 3
+            elif IR == PRN:
+                print(f"Running operation {IR}")
+                self.branchtable[IR](reg_a)
+                self.pc += 2
+            elif IR == MUL:
+                print(f"Running operation {IR}")
+                self.alu("MUL", reg_a, reg_b)
+                self.pc += 3            
+            else:
+                print(f"Unkown instruction {IR}")
+                self.handle_HLT()
