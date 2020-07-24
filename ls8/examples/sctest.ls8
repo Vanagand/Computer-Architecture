@@ -1,3 +1,10 @@
+# Code to test the Sprint Challenge
+#
+# Expected output:
+# 1
+# 4
+# 5
+
 10000010 # LDI R0,10
 00000000
 00001010
@@ -75,5 +82,5 @@
 00000010
 01000111 # PRN R3
 00000011
-# TEST5 (address 73):
+
 00000001 # HLT
