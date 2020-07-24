@@ -1,61 +1,61 @@
+import sys
+
 # python .\cpu.py examples\print8.ls8
 # python .\ls8.py examples\print8.ls8
 # python .\ls8.py examples\mult.ls8
 # python .\ls8.py examples\stack.ls8
 
-"""CPU functionality."""
-
-import sys
+"""Operations table."""
 
 # ALU Operations
-ADD  = 0b10100000
-SUB  = 0b10100001
-MUL  = 0b10100010
-DIV  = 0b10100011
-# MOD  = 0b10100100
+# ADD  = 0b10100000                                                            DONE
+# SUB  = 0b10100001                                                            DONE
+# MUL  = 0b10100010                                                            DONE
+# DIV  = 0b10100011                                                            DONE
+# MOD  = 0b10100100                                                            DONE
 
-# INC  = 0b01100101
-# DEC  = 0b01100110
+# INC  = 0b01100101                                                            DONE
+# DEC  = 0b01100110                                                            DONE
 
-# CMP  = 0b10100111
+# CMP  = 0b10100111                                                            DONE
 
-# AND  = 0b10101000
-# NOT  = 0b01101001
-# OR   = 0b10101010
-# XOR  = 0b10101011
-# SHL  = 0b10101100
-# SHR  = 0b10101101
+# AND  = 0b10101000                                                            DONE
+# NOT  = 0b01101001                                                            DONE
+# OR   = 0b10101010                                                            DONE
+# XOR  = 0b10101011                                                            DONE
+# SHL  = 0b10101100                                                            DONE
+# SHR  = 0b10101101                                                            DONE
 
 # PC Mutators
-# CALL = 0b01010000
-# RET  = 0b00010001
+# CALL = 0b01010000                                                            #>>> TODO
+# RET  = 0b00010001                                                            #>>> TODO
 
-# INT  = 0b01010010
-# IRET = 0b00010011
+# INT  = 0b01010010                                                            #>>>
+# IRET = 0b00010011                                                            #>>>
 
-# JMP  = 0b01010100
-# JEQ  = 0b01010101
-# JNE  = 0b01010110
-# JGT  = 0b01010111
-# JLT  = 0b01011000
-# JLE  = 0b01011001
-# JGE  = 0b01011010
+# JMP  = 0b01010100                                                            #>>>
+# JEQ  = 0b01010101                                                            #>>>
+# JNE  = 0b01010110                                                            #>>>
+# JGT  = 0b01010111                                                            #>>>
+# JLT  = 0b01011000                                                            #>>>
+# JLE  = 0b01011001                                                            #>>>
+# JGE  = 0b01011010                                                            #>>>
 
 # Other
-# NOP  = 0b00000000
+# NOP  = 0b00000000                                                            #>>>
 
-HLT  = 0b00000001 
+# HLT  = 0b00000001                                                            DONE
 
-LDI  = 0b10000010
+# LDI  = 0b10000010                                                            #>>>
 
-# LD   = 0b10000011
-# ST   = 0b10000100
+# LD   = 0b10000011                                                            #>>>
+# ST   = 0b10000100                                                            #>>>
 
-PUSH = 0b01000101
-POP  = 0b01000110
+# PUSH = 0b01000101                                                            DONE
+# POP  = 0b01000110                                                            DONE
 
-PRN  = 0b01000111
-# PRA  = 0b01001000
+# PRN  = 0b01000111                                                            DONE
+# PRA  = 0b01001000                                                            #>>>
 
 
 """CPU functionality."""
@@ -69,38 +69,90 @@ class CPU:
         """Construct a new CPU."""
         self.ram = [0] * 256
         self.reg = [0] * 8
-        self.pc = 0
+        self.PC = 0b00000000
+        self.FL = 0b00000000
         self.running = True
         self.configure_branchtable()
-        
-        SP = 7
-        self.reg[SP] = 0xF4
+
+        self.IM = 5 # interrupt mask
+        self.reg[self.IM] = 0b00000000                                         #>>> TODO
+        self.IS = 6 # interrupt status
+        self.reg[self.IS] = 0b00000000                                         #>>> TODO
+        self.SP = 7 # stack pointer
+        self.reg[self.SP] = 0xF4
         
     def configure_branchtable(self):
         self.branchtable = {}
-        self.branchtable[HLT] = self.handle_HLT
-        self.branchtable[LDI] = self.handle_LDI
-        self.branchtable[PUSH] = self.handle_PUSH
-        self.branchtable[POP] = self.handle_POP
-        self.branchtable[PRN] = self.handle_PRN
+        # self.branchtable[0b01010000] = self.handle_CALL                      #>>> TODO
+        # self.branchtable[0b00010001] = self.handle_RET                       #>>> TODO
+        # self.branchtable[0b01010010] = self.handle_INT                       #>>> TODO
+        # self.branchtable[0b00010011] = self.handle_IRET                      #>>> TODO
+        # self.branchtable[0b01010100] = self.handle_JMP                       #>>> TODO
+        # self.branchtable[0b01010101] = self.handle_JEQ                       #>>> TODO
+        # self.branchtable[0b01010110] = self.handle_JNE                       #>>> TODO
+        # self.branchtable[0b01010111] = self.handle_JGT                       #>>> TODO
+        # self.branchtable[0b01011000] = self.handle_JLT                       #>>> TODO
+        # self.branchtable[0b01011001] = self.handle_JLE                       #>>> TODO
+        # self.branchtable[0b01011010] = self.handle_JGE                       #>>> TODO
+        # self.branchtable[0b00000000] = self.handle_NOP                       #>>> TODO
+        self.branchtable[0b00000001] = self.handle_HLT
+        self.branchtable[0b10000010] = self.handle_LDI
+        # self.branchtable[0b10000011] = self.handle_LD                        #>>> TODO
+        # self.branchtable[0b10000100] = self.handle_ST                        #>>> TODO
+        self.branchtable[0b01000101] = self.handle_PUSH
+        self.branchtable[0b01000110] = self.handle_POP
+        self.branchtable[0b01000111] = self.handle_PRN
+        # self.branchtable[0b01001000] = self.handle_PRA                       #>>> TODO
     
     # Branchtable operations
+    def handle_CALL(self):                                                     #>>> TODO
+        pass
+    def handle_RET(self):                                                      #>>> TODO
+        pass 
+    def handle_INT(self):                                                      #>>> TODO
+        pass 
+    def handle_IRET(self):                                                     #>>> TODO
+        pass
+    def handle_JMP(self):                                                      #>>> TODO
+        pass 
+    def handle_JEQ(self):                                                      #>>> TODO
+        pass 
+    def handle_JNE(self):                                                      #>>> TODO
+        pass 
+    def handle_JGT(self):                                                      #>>> TODO
+        pass 
+    def handle_JLT(self):                                                      #>>> TODO
+        pass 
+    def handle_JLE(self):                                                      #>>> TODO
+        pass 
+    def handle_JGE(self):                                                      #>>> TODO
+        pass 
+    def handle_NOP(self):                                                      #>>> TODO
+        pass 
     def handle_HLT(self):
         print("Handling HLT operation!")
         self.running = False
     def handle_LDI(self, reg_num, input):
         self.reg[reg_num] = input
         print(f"Handling LDI operation! R{reg_num},{input}\n")
+    def handle_LS(self):                                                       #>>> TODO
+        pass
+    def handle_ST(self):                                                       #>>> TODO
+        pass
     def handle_PUSH(self, reg_num):
         # decrement stack pointer
-        print(f"Handling PUSH operation! R{reg_num}\nPASS\n")
-        self.reg[7] -= 1
+        print(f"Handling PUSH operation! R{reg_num}\n")
+        self.ram_write(self.reg[self.SP], self.reg[reg_num])
+        self.SP -= 1
     def handle_POP(self, reg_num):
         # increment stack pointed
-        print(f"Handling POP operation! R{reg_num}\nPASS\n")
-        pass
+        print(f"Handling POP operation! R{reg_num}\n")
+        self.reg[reg_num] = self.ram_read(self.reg[self.SP+1])
+        self.SP += 1
     def handle_PRN(self, reg_num):
-        print(f"Handling PRN operation! R{reg_num}\n{self.reg[reg_num]}\n")
+        print(f"Handling PRN operation! R{reg_num} >>> {self.reg[reg_num]}\n")
+    def handle_PRA(self):                                                      #>>> TODO
+        pass
         
 ###
 ###
@@ -163,34 +215,83 @@ class CPU:
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
-        if op == "ADD":
+        if op == 0b10100000:
+            """Add the value from reg_a and reg_b, and store the result into reg_a"""
+            print(f"ADD R0,({self.reg[0]}+{self.reg[1]})\n")
             self.reg[reg_a] += self.reg[reg_b]
-        elif op == "SUB":
+
+        elif op == 0b10100001:
+            """Substract the value from reg_a and reg_b, and store the result into reg_a"""
+            print(f"SUB R0,({self.reg[0]}-{self.reg[1]})\n")
             self.reg[reg_a] -= self.reg[reg_b]
-        elif op == "MUL":
+
+        elif op == 0b10100010:
+            """Multiplies the value from reg_a and reg_b, and store the result into reg_a"""
+            print(f"MUL R0,({self.reg[0]}*{self.reg[1]})\n")
             self.reg[reg_a] *= self.reg[reg_b]
-        elif op == "DIV":
+
+        elif op == 0b10100011:
+            """Divides the value from reg_a and reg_b, and store the result into reg_a"""
+            print(f"DIV R0,({self.reg[0]}/{self.reg[1]})\n")
             self.reg[reg_a] /= self.reg[reg_b]
-        elif op == "MOD":
-            pass
-        elif op == "INC":
-            pass
-        elif op == "DEC":
-            pass
-        elif op == "CMP":
-            pass
-        elif op == "AND":
-            pass
-        elif op == "NOT":
-            pass
-        elif op == "OR":
-            pass
-        elif op == "XOR":
-            pass
-        elif op == "SHL":
-            pass
-        elif op == "SHR":
-            pass
+
+        elif op == 0b10100100:
+            """Divides the value from reg_a and reg_b, and store the remainder into reg_a"""
+            print(f"MOD R0,({self.reg[0]}%{self.reg[1]})\n")
+            self.reg[reg_a] %= self.reg[reg_b]
+
+        elif op == 0b01100101:
+            """Increments the given register by 1"""
+            print(f"INC R0,({self.reg[0]}+1)\n")
+            self.reg[reg_a] += 1
+
+        elif op == 0b01100110:
+            """Decreases the given register by 1"""
+            print(f"DEC R0,({self.reg[0]}-1)\n")
+            self.reg[reg_a] -= 1
+
+        elif op == "0b10100111": # 0b00000LGE
+            """Compares the values of reg_a and reg_b."""
+            if self.reg[reg_a] == self.reg[reg_b]:
+                print(f"CMP R0,{self.reg[0]} == R1,{self.reg[1]}")
+                self.FL = 0b00000001
+            if self.reg[reg_a] < self.reg[reg_b]:
+                print(f"CMP R0,{self.reg[0]} < R1,{self.reg[1]}")
+                self.FL = 0b00000010
+            if self.reg[reg_a] > self.reg[reg_b]:
+                print(f"CMP R0,{self.reg[0]} > R1,{self.reg[1]}")
+                self.FL = 0b00000100
+
+        elif op == 0b10101000:
+            """Bitwise-AND from reg_a and reg_b, and store the result into reg_a"""
+            print(f"AND\n")
+            self.reg[reg_a] = self.reg[reg_a] & self.reg[reg_b]
+
+        elif op == 0b01101001:
+            """Bitwise-NOT from reg_a and reg_b, and store the result into reg_a"""
+            print(f"NOT\n")
+            self.reg[reg_a] = ~ self.reg[reg_a]
+
+        elif op == 0b10101010:
+            """Bitwise-OR from reg_a and reg_b, and store the result into reg_a"""
+            print(f"OR\n")
+            self.reg[reg_a] = self.reg[reg_a] | self.reg[reg_b]
+
+        elif op == 0b10101011:
+            """Bitwise-XOR from reg_a and reg_b, and store the result into reg_a"""
+            print(f"XOR\n")
+            self.reg[reg_a] = self.reg[reg_a] ^ self.reg[reg_b]
+
+        elif op == 0b10101100:
+            """Shift the value in reg_a left by the number of bits specified in reg_b, filling the low bits with 0."""
+            print(f"SHL\n")
+            self.reg[reg_a] = self.reg[reg_a] << self.reg[reg_b]
+
+        elif op == 0b10101101:
+            """Shift the value in reg_a right by the number of bits specified in reg_b, filling the high bits with 0."""
+            print(f"SHR\n")
+            self.reg[reg_a] = self.reg[reg_a] >> self.reg[reg_b]
+
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -205,12 +306,12 @@ class CPU:
         """
 
         print(f"TRACE: %02X | %02X %02X %02X |" % (
-            self.pc,
+            self.PC,
             #self.fl,
             #self.ie,
-            self.ram_read(self.pc),
-            self.ram_read(self.pc + 1),
-            self.ram_read(self.pc + 2)
+            self.ram_read(self.PC),
+            self.ram_read(self.PC + 1),
+            self.ram_read(self.PC + 2)
         ), end='')
 
         for i in range(8):
@@ -227,34 +328,40 @@ class CPU:
         self.load()
         
         while self.running:
-            IR = self.ram[self.pc]
-            reg_a = self.ram[self.pc + 1]
-            reg_b = self.ram[self.pc + 2]
-            
-            # HLT, LDI, PRN, MUL
-            if IR == HLT:
-                # print(f"Running operation {IR}")
+            IR = self.ram[self.PC]
+            reg_a = self.ram[self.PC + 1]
+            reg_b = self.ram[self.PC + 2]
+
+            if IR == 0b00000001: # HLT
                 self.branchtable[IR]()
-            elif IR == LDI:
-                # print(f"Running operation {IR}")
+            elif IR == 0b10000010: # LDI
                 self.branchtable[IR](reg_a, reg_b)
-                self.pc += 3
-            elif IR == PRN:
-                # print(f"Running operation {IR}")
+                self.PC += 3
+            elif IR == 0b01000111: # PRN
                 self.branchtable[IR](reg_a)
-                self.pc += 2
-            elif IR == MUL:
-                # print(f"Running operation {IR}")
+                self.PC += 2
+            elif IR == 0b10100000: # ADD
+                self.alu("ADD", reg_a, reg_b)
+                self.PC += 3
+            elif IR == 0b10100001: # SUB
+                self.alu("SUB", reg_a, reg_b)
+                self.PC += 3
+            elif IR == 0b10100010: # MUL
                 self.alu("MUL", reg_a, reg_b)
-                self.pc += 3
-            elif IR == PUSH:
-                # print(f"Running operation {IR}")
+                self.PC += 3
+            elif IR == 0b10100011: # DIV
+                self.alu("DIV", reg_a, reg_b)
+                self.PC += 3
+            elif IR == 0b01000101: # PUSH
                 self.branchtable[IR](reg_a)
-                self.pc += 2
-            elif IR == POP:
-                # print(f"Running operation {IR}")
+                self.PC += 2
+            elif IR == 0b01000110: # POP
                 self.branchtable[IR](reg_a)
-                self.pc += 2         
+                self.PC += 2
+            elif IR == 0b01010000: # CALL
+                self.branchtable[IR]()
+            elif IR == 0b00010001: # RET
+                self.branchtable[IR]()
             else:
                 print(f"Unkown instruction {IR}")
                 self.handle_HLT()
